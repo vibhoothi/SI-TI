@@ -16,20 +16,33 @@
 
 clear
 close all
-clc
+%clc
 fns = dir('*.yuv'); % assumes YUV videos to be present in the same directory as this script
 
 % Assuming a video of 4096x2160 resolution
+
 video_height = 2160; 
-video_width = 4096;
+video_width = 3840;
 % Full Range or Limited Range, default is Limited Range
-Range = 1; % 0 --> Limited Range, 1 -- Full Range (default)
-out_fid = fopen( 'SITIVals.csv', 'w' );
-fprintf( out_fid, '%s, %s, %s\n', 'Sequence Name', 'SI', 'TI');
+Range = 0; % 0 --> Limited Range, 1 -- Full Range (default)
+out_fid = fopen( 'SITIVals2.csv', 'w' );
+fprintf( out_fid, '%s, %s, %s, %s\n', 'Sequence Name', 'SI', 'TI', 'DR');
 
 for i = 1:length(fns)
-    fid = fopen(fns(i).name);
-    [SI, TI] = SITI_10bit(fns(i).name,video_height,video_width, Range);
-    fprintf( out_fid, '%s,%d, %d\n', fns(i).name, SI, TI);
+    fid = fopen(append('',fns(i).name));
+    current_file = fns(i).name;
+    first_splits = split(current_file, 'x'); % Part I: Two arrays 
+    height_splits = split(first_splits{1},'_'); % Part I: Split by '_'
+                                                % last_elem has height val.
+    width_splits = split(first_splits{2},'_'); % Part I: Split by '_'
+                                                % last_elem has width val.
+
+    video_height = str2double(cell2mat(height_splits(end))); %PartII: Parse
+    video_width = str2double(cell2mat(width_splits(1))); %PartII: Parse
+    disp(video_width);
+    tic;
+    [SI, TI, DR] = SITI_10bit(append('',fns(i).name),video_height,video_width, Range);
+    toc;
+    fprintf( out_fid, '%s,%d, %d, %d\n', fns(i).name, SI, TI, DR);
     fclose(fid);
 end

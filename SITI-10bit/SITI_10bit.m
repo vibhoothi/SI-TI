@@ -5,7 +5,7 @@
 % Author: Nabajeet Barman, Kingston University, London.
 % Email:  n.barman@ieee.org; nabajeetbarman4@gmail.com
 
-function [SI, TI] = SITI_10bit(sequence_name, R, C, Range)
+function [SI, TI, DR] = SITI_10bit(sequence_name, R, C, Range)
 err_status = 0;
 if Range == 0
     disp('You have mentioned YUV file to be Limited Range')
@@ -28,7 +28,7 @@ byte4chroma = 2*R*C*0.5;    %(for 4:2:0)
 
     %   Compute the Sobel window needed for SI computation
     h = fspecial('sobel');
-
+    DR_array = zeros(F, 1);
 %   Output vectors declaration
     SI_array = zeros(F, 1);
     TI_array = zeros(F, 1);
@@ -57,6 +57,18 @@ for f = 1:F
             err_status = 2;
         end    
     end   
+    	% Sort
+        numelY=numel(Y);
+	    tempY =reshape(Y, [numelY, 1]);
+	    tempY=sort(tempY);
+        % Exclude 1% of pixels
+        Th1=numelY/100; %% 1% of pixels
+	    Th2=numelY-Th1;
+	    tempY=tempY(Th1+1:Th2);
+        % Calculate characteristics
+        Lmin = tempY(1);
+	    Lmax = tempY(end);
+	    DR_array(f) = log2(Lmax/Lmin);
     %   Spatial information
     hor_edge = imfilter(Y, h);
     vert_edge = imfilter(Y, h');   
@@ -74,6 +86,8 @@ for f = 1:F
 end
 SI = max(SI_array);
 TI = max(TI_array);
+DR_max = max(DR_array);
+DR = mean(DR_array);
 fname = sprintf('%s.mat', sequence_name);
 save(fname);
 fclose(fp);
